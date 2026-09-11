@@ -1,6 +1,29 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+function install_nodejs() {
+  # Install Node.js 24 from NodeSource. NodeSource uses a distro-independent
+  # "nodistro" suite, so it works on any Ubuntu release. If NodeSource is
+  # unreachable, fall back to the Ubuntu distro nodejs package (still modern
+  # on 24.04+). Either path leaves a working "node" in the image.
+  local NODE_MAJOR="24"
+
+  mkdir -p /etc/apt/keyrings
+  if curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+      | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${NODE_MAJOR}.x nodistro main" \
+      > /etc/apt/sources.list.d/nodesource.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends nodejs; then
+    echo "Installed Node.js ${NODE_MAJOR}.x from NodeSource"
+  else
+    echo "NodeSource unavailable; falling back to the distro nodejs package"
+    rm -f /etc/apt/sources.list.d/nodesource.list
+    apt-get update
+    apt-get install -y --no-install-recommends nodejs
+  fi
+}
+
 function install_git() {
   ( apt-get install -y --no-install-recommends git \
    || apt-get install -t stable -y --no-install-recommends git )

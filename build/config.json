@@ -82,7 +82,7 @@
     },
     {
       "category": "node",
-      "source": "apt",
+      "source": "script",
       "packages": [
         "nodejs"
       ]

@@ -5,19 +5,23 @@ function configure_git() {
   # shellcheck source=/dev/null
   source /etc/os-release
 
+  # Newer Ubuntu releases ship a recent git in the distro repo, so the
+  # git-core PPA is only needed on focal. The PPA key server call is also
+  # a flaky build step, so skip it entirely on non-focal releases.
+  if [[ "${VERSION_CODENAME}" != "focal" ]]; then
+    return 0
+  fi
+
   local GIT_CORE_PPA_KEY="A1715D88E1DF1F24"
 
   gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys ${GIT_CORE_PPA_KEY}
   gpg --export ${GIT_CORE_PPA_KEY} | gpg --dearmor -o /usr/share/keyrings/git-core.gpg
 
-  if [[ "${VERSION_CODENAME}" == "focal" ]]; then
-    local GIT_CORE_FOCAL_PPA_KEY="E363C90F8F1B6217"
-    local KEYRING_FILE="/usr/share/keyrings/git-core-focal.gpg"
-    gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys ${GIT_CORE_FOCAL_PPA_KEY}
-    gpg --export ${GIT_CORE_FOCAL_PPA_KEY} | gpg --dearmor -o "${KEYRING_FILE}"
-    echo deb [signed-by=${KEYRING_FILE}] http://ppa.launchpad.net/git-core/ppa/ubuntu focal main>/etc/apt/sources.list.d/git-core.list
-
-  fi
+  local GIT_CORE_FOCAL_PPA_KEY="E363C90F8F1B6217"
+  local KEYRING_FILE="/usr/share/keyrings/git-core-focal.gpg"
+  gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys ${GIT_CORE_FOCAL_PPA_KEY}
+  gpg --export ${GIT_CORE_FOCAL_PPA_KEY} | gpg --dearmor -o "${KEYRING_FILE}"
+  echo deb [signed-by=${KEYRING_FILE}] http://ppa.launchpad.net/git-core/ppa/ubuntu focal main>/etc/apt/sources.list.d/git-core.list
 }
 
 function configure_docker() {

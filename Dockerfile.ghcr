@@ -1,0 +1,43 @@
+# Self-contained GitHub Actions runner image on Ubuntu 26.04 (resolute).
+#
+# The upstream project splits the build into a Docker Hub base image
+# (Dockerfile.base) plus a runner layer (Dockerfile). This file combines both
+# stages into one image so it can be published straight to GHCR with no
+# Docker Hub dependency. It reuses the upstream build/ scripts and entrypoint
+# unchanged, so Docker-in-Docker (START_DOCKER_SERVICE), the runner agent, and
+# the entrypoint keep working the same way.
+FROM ubuntu:26.04
+LABEL maintainer="rogerxaic"
+LABEL org.opencontainers.image.source="https://github.com/rogerxaic/github-runner"
+LABEL org.opencontainers.image.description="Self-hosted GitHub Actions runner on Ubuntu 26.04 with modern tooling (Node 24, Python 3.14, curl 8, Docker-in-Docker)"
+
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+ENV DEBIAN_FRONTEND=noninteractive
+
+# --- Base tooling: docker-in-docker, git, git-lfs, node, python, gh, aws, etc.
+COPY --chmod=700 build/ /tmp/build/
+RUN /tmp/build/install_base.sh
+
+# --- GitHub Actions runner agent ---
+ENV AGENT_TOOLSDIRECTORY=/opt/hostedtoolcache
+RUN mkdir -p /opt/hostedtoolcache
+
+ARG GH_RUNNER_VERSION="2.337.0"
+ARG TARGETPLATFORM
+
+WORKDIR /actions-runner
+COPY install_actions.sh /actions-runner
+
+RUN chmod +x /actions-runner/install_actions.sh \
+  && /actions-runner/install_actions.sh ${GH_RUNNER_VERSION} ${TARGETPLATFORM} \
+  && rm /actions-runner/install_actions.sh \
+  && chown -R runner /_work /actions-runner /opt/hostedtoolcache
+
+COPY token.sh entrypoint.sh app_token.sh /
+RUN chmod +x /token.sh /entrypoint.sh /app_token.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["./bin/Runner.Listener", "run", "--startuptype", "service"]
