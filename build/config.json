@@ -1,115 +1,86 @@
 {
-  "user": {
-    "user-id": 1001,
-    "group-id": 121,
-    "docker-group-id": 500
-  },
-  "install": [
-    {
-      "category": "aws",
-      "source": "script",
-      "packages": [
-        "aws-cli"
-      ]
+    "user": {
+        "user-id": 1001,
+        "group-id": 121,
+        "docker-group-id": 500
     },
-    {
-      "category": "development",
-      "source": "apt",
-      "packages": [
-        "build-essential",
-        "lsb-release",
-        "zlib1g-dev",
-        "zstd",
-        "gettext",
-        "libcurl4-openssl-dev",
-        "libpq-dev",
-        "pkg-config",
-        "libyaml-dev"
-      ]
-    },
-    {
-      "category": "container-tools",
-      "source": "script",
-      "packages": [
-        "container-tools"
-      ]
-    },
-    {
-      "category": "debugging",
-      "source": "script",
-      "packages": [
-        "liblttng-ust"
-      ]
-    },
-    {
-      "category": "docker-cli",
-      "source": "script",
-      "packages": [
-        "docker-cli"
-      ]
-    },
-    {
-      "category": "docker",
-      "source": "script",
-      "packages": [
-        "docker"
-      ]
-    },
-    {
-      "category": "git",
-      "source": "script",
-      "packages": [
-        "git",
-        "git-lfs"
-      ]
-    },
-    {
-      "category": "github",
-      "source": "script",
-      "packages": [
-        "github-cli"
-      ]
-    },
-    {
-      "category": "network-tools",
-      "source": "apt",
-      "packages": [
-        "inetutils-ping",
-        "wget",
-        "openssh-client",
-        "rsync"
-      ]
-    },
-    {
-      "category": "node",
-      "source": "script",
-      "packages": [
-        "nodejs"
-      ]
-    },
-    {
-      "category": "powershell",
-      "source": "script",
-      "packages": [
-        "powershell"
-      ]
-    },
-    {
-      "category": "python",
-      "source": "apt",
-      "packages": [
-        "python3",
-        "python3-pip",
-        "python3-setuptools",
-        "python3-venv"
-      ]
-    },
-    {
-      "category": "yq",
-      "source": "script",
-      "packages": [
-        "yq"
-      ]
-    }
-  ]
+    "install": [
+        {
+            "category": "development",
+            "source": "apt",
+            "packages": [
+                "build-essential",
+                "lsb-release",
+                "zlib1g-dev",
+                "zstd",
+                "gettext",
+                "libcurl4-openssl-dev",
+                "libpq-dev",
+                "pkg-config",
+                "libyaml-dev"
+            ]
+        },
+        {
+            "category": "debugging",
+            "source": "script",
+            "packages": [
+                "liblttng-ust"
+            ]
+        },
+        {
+            "category": "docker-cli",
+            "source": "script",
+            "packages": [
+                "docker-cli"
+            ]
+        },
+        {
+            "category": "docker",
+            "source": "script",
+            "packages": [
+                "docker"
+            ]
+        },
+        {
+            "category": "git",
+            "source": "script",
+            "packages": [
+                "git"
+            ]
+        },
+        {
+            "category": "network-tools",
+            "source": "apt",
+            "packages": [
+                "inetutils-ping",
+                "wget",
+                "openssh-client",
+                "rsync"
+            ]
+        },
+        {
+            "category": "node",
+            "source": "script",
+            "packages": [
+                "nodejs"
+            ]
+        },
+        {
+            "category": "python",
+            "source": "apt",
+            "packages": [
+                "python3",
+                "python3-pip",
+                "python3-setuptools",
+                "python3-venv"
+            ]
+        },
+        {
+            "category": "yq",
+            "source": "script",
+            "packages": [
+                "yq"
+            ]
+        }
+    ]
 }
