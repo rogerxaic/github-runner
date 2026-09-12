@@ -273,6 +273,11 @@ if [[ ${_START_DOCKER_SERVICE} == "true" ]]; then
   if [[ ${_DEBUG_ONLY} == "true" ]]; then
     echo ${_PREFIX} service docker start
   else
+    # A stale docker.pid survives a container restart; PIDs reset, so the init script
+    # sees a live unrelated PID and refuses to start dockerd. Clear it when no dockerd runs.
+    if ! pgrep -x dockerd >/dev/null 2>&1; then
+      ${_PREFIX} rm -f /var/run/docker.pid /run/docker.pid
+    fi
     ${_PREFIX} service docker start
   fi
 fi
