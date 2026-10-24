@@ -2,6 +2,13 @@ name: build-and-push-ghcr
 
 # Build the self-hosted runner image and publish it to GHCR.
 # The only publish target is ghcr.io/rogerxaic/github-runner.
+#
+# The image sets DISABLE_AUTO_UPDATE, so the runners never update
+# themselves. GitHub stops sending jobs to a runner about 30 days after a
+# newer release. So the daily schedule checks the latest release of
+# actions/runner, and builds an image when no `<version>-ubuntu-26.04` tag
+# exists for it. Renovate in the gitops repo then sees the new digest of
+# `ubuntu-26.04` and opens the merge request that deploys it.
 
 on:
   push:
@@ -12,11 +19,18 @@ on:
       - "SECURITY.md"
       - "CONTRIBUTING.md"
       - "LICENSE"
+      - "AGENTS.md"
+  schedule:
+    - cron: "23 5 * * *"
   workflow_dispatch:
 
 permissions:
   contents: read
   packages: write
+
+concurrency:
+  group: build-and-push-ghcr
+  cancel-in-progress: false
 
 env:
   IMAGE: ghcr.io/rogerxaic/github-runner
@@ -25,16 +39,39 @@ jobs:
   build-push:
     runs-on: ubuntu-latest
     steps:
+      - name: Resolve the runner version
+        id: runner
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          version=$(gh api repos/actions/runner/releases/latest --jq '.tag_name | ltrimstr("v")')
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          # A push or a manual run always builds. The schedule builds only
+          # for a runner version that has no image yet.
+          if [ "$EVENT" = "schedule" ] \
+            && docker manifest inspect "${IMAGE}:${version}-ubuntu-26.04" > /dev/null 2>&1; then
+            echo "build=false" >> "$GITHUB_OUTPUT"
+            echo "The image for runner ${version} exists. Nothing to build."
+          else
+            echo "build=true" >> "$GITHUB_OUTPUT"
+            echo "Build the image for runner ${version}."
+          fi
+
       - name: Checkout
+        if: steps.runner.outputs.build == 'true'
         uses: actions/checkout@v5
 
       - name: Set up QEMU
+        if: steps.runner.outputs.build == 'true'
         uses: docker/setup-qemu-action@v4
 
       - name: Set up Docker Buildx
+        if: steps.runner.outputs.build == 'true'
         uses: docker/setup-buildx-action@v4
 
       - name: Log in to GHCR
+        if: steps.runner.outputs.build == 'true'
         uses: docker/login-action@v4
         with:
           registry: ghcr.io
@@ -42,6 +79,7 @@ jobs:
           password: ${{ github.token }}
 
       - name: Build and push
+        if: steps.runner.outputs.build == 'true'
         uses: docker/build-push-action@v7
         with:
           context: .
@@ -49,6 +87,9 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           provenance: false
+          build-args: |
+            GH_RUNNER_VERSION=${{ steps.runner.outputs.version }}
           tags: |
+            ${{ env.IMAGE }}:${{ steps.runner.outputs.version }}-ubuntu-26.04
             ${{ env.IMAGE }}:ubuntu-26.04
             ${{ env.IMAGE }}:latest
